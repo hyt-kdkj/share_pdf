@@ -1,0 +1,1 @@
+There was an issue where the papers read by senior members were not documented, which made it time-consuming to find them each time. Additionally, for those who are new to the research, it was difficult to know which papers to read. To address this, I decided to create this app that allows lab members to share papers easily.
