@@ -1,0 +1,12 @@
+<html>
+    <head>
+        {{ dropzone.load_css() }}
+        {{ dropzone.load_js() }}
+        {{ dropzone.style('border: 2px dashed #0087F7; margin: 10%; min-height: 400px;') }}
+    </head>
+    <body>
+        <form method="POST" action="{{ url_for('upload') }}" class="dropzone" id="upload-zone">
+            {{ dropzone.create(action=url_for('upload')) }}
+        </form>
+    </body>
+</html>
