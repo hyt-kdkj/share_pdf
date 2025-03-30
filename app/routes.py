@@ -21,7 +21,6 @@ def index():
 def category_page(category_name):
     # カテゴリ名を使用してCategoryインスタンスを作成
     category_path = Path(app.config['UPLOAD_FOLDER']) / category_name
-    registerd_file = category_path / 'registerd.json'
 
     if not category_path.exists():
         return 'Category not found', 404  # カテゴリフォルダが存在しない場合は404を返す

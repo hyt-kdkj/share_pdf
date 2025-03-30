@@ -28,8 +28,10 @@ def extract_metadata_from_pdf(pdf_file):
         DOI = doi.pdf_to_doi(temp_pdf.name)
         if DOI:
             match = re.search(r'10\.\d{4,9}/[\w\-._;()/:]+', DOI, re.IGNORECASE)
+
             if match:
                 DOI = match.group(0)  # DOIの正しい部分を抽出
+                # DOI = (DOI.split('/'))[:2].join('/')
                 title, authors, published_date = get_paper_metadata(DOI)
                 return json.dumps({
                     "title": title,
@@ -38,4 +40,3 @@ def extract_metadata_from_pdf(pdf_file):
                     "DOI": DOI
                 }, indent=4), True
     return json.dumps({}, indent=4), False
-
