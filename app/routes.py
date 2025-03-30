@@ -6,10 +6,7 @@ import json
 from urllib.parse import unquote
 from app.get_paper_info import extract_metadata_from_pdf
 from werkzeug.utils import secure_filename  # 修正: ファイル名の安全性を確保するためにインポート
-<<<<<<< HEAD
-
-=======
->>>>>>> sub-working-tree
+import os  # 修正: ファイル名の重複を防ぐためにosをインポート
 
 
 @app.route('/')
@@ -17,27 +14,20 @@ def index():
     # カテゴリ情報を読み込み
     with open(app.config['CATEGORY_LIST'], 'r', encoding='utf-8') as f:
         data = json.load(f)
-    categories = data.get('categories', []) 
+    categories = data.get('categories', [])  # 修正: categories配列を取得
     return render_template('index.html', categories=categories)
 
 @app.route('/category_page/<string:category_name>')
 def category_page(category_name):
-    if check_category_existence(category_name):
-        category = Category(category_name)
-        return render_template('category.html', category=category)
-    else:
-        with open(app.config['CATEGORY_LIST'], 'r', encoding='utf-8') as f:
-            categories = json.load(f)
-        categories['categories'].remove(category_name)
-        with open(app.config['CATEGORY_LIST'], 'w', encoding='utf-8') as file:
-            json.dump(categories, file, ensure_ascii=False, indent=4)
-        return redirect(url_for('index'),categories=categories)
+    # カテゴリ名を使用してCategoryインスタンスを作成
+    category_path = Path(app.config['UPLOAD_FOLDER']) / category_name
+    registerd_file = category_path / 'registerd.json'
 
-<<<<<<< HEAD
+    if not category_path.exists():
+        return 'Category not found', 404  # カテゴリフォルダが存在しない場合は404を返す
+
     category = Category(category_name)
     return render_template('category.html', category=category)
-=======
->>>>>>> sub-working-tree
 
 @app.route('/upload/<string:category_name>', methods=['POST'])
 def upload(category_name):
@@ -58,7 +48,7 @@ def upload(category_name):
 
         # ファイル名の重複をチェック
         if save_path.exists():
-            return 'File with the same name already exists', 400  # 修正: JSONレスポンスを文字列に変更
+            return jsonify({"error": "File with the same name already exists"}), 400
 
         try:
             # ファイルを保存
@@ -84,8 +74,8 @@ def upload(category_name):
             # リダイレクトして画面をリロード
             return redirect(url_for('category_page', category_name=category_name))
         except Exception as e:
-            return f"Error: {str(e)}", 500  
-    return 'Invalid file type', 400  
+            return jsonify({"error": str(e)}), 500  # エラー時のレスポンス
+    return 'Invalid file type', 400  # エラー時は400を返す
 
 @app.route('/add_category', methods=['POST'])
 def add_category():
@@ -107,8 +97,8 @@ def add_category():
             data['categories'].sort()
             with open(app.config['CATEGORY_LIST'], 'w', encoding='utf-8') as file:
                 json.dump(data, file, ensure_ascii=False, indent=4)
-        return 'Category added successfully', 200  
-    return 'Category name is required', 400  
+        return jsonify({"message": "Category added successfully"}), 200
+    return jsonify({"error": "Category name is required"}), 400
 
 @app.route('/delete_category', methods=['DELETE'])
 def delete_category():
@@ -130,10 +120,10 @@ def delete_category():
                     with open(app.config['CATEGORY_LIST'], 'w', encoding='utf-8') as file:
                         json.dump(data, file, ensure_ascii=False, indent=4)
 
-                return 'Category deleted successfully', 200  
-            return "Category must contain only 'registerd.json' to be deleted", 400  
-        return 'Category not found', 404  
-    return 'Category name is required', 400  #
+                return jsonify({"message": "Category deleted successfully"}), 200
+            return jsonify({"error": "Category must contain only 'registerd.json' to be deleted"}), 400
+        return jsonify({"error": "Category not found"}), 404
+    return jsonify({"error": "Category name is required"}), 400
 
 @app.route('/rename_category', methods=['PUT'])
 def rename_category():
@@ -143,7 +133,7 @@ def rename_category():
     if old_name and new_name:
         old_path = Path(app.config['UPLOAD_FOLDER']) / old_name
         new_path = Path(app.config['UPLOAD_FOLDER']) / new_name
-        if old_path.exists() and not new_path.exists():
+        if old_path.exists():
             old_path.rename(new_path)
             with open(app.config['CATEGORY_LIST'], 'r', encoding='utf-8') as file:
                 data = json.load(file)
@@ -153,9 +143,9 @@ def rename_category():
                 data['categories'].sort()
                 with open(app.config['CATEGORY_LIST'], 'w', encoding='utf-8') as file:
                     json.dump(data, file, ensure_ascii=False, indent=4)
-            return 'Category renamed successfully', 200  
-        return 'Category not found', 404  
-    return 'Old and new category names are required', 400  
+            return jsonify({"message": "Category renamed successfully"}), 200
+        return jsonify({"error": "Category not found"}), 404
+    return jsonify({"error": "Old and new category names are required"}), 400
 
 @app.route('/download/<string:category_name>/<string:filename>')
 def download_paper(category_name, filename):
@@ -167,27 +157,15 @@ def download_paper(category_name, filename):
     if file_path.exists():
         return send_file(file_path, as_attachment=True, download_name=filename)
     else:
-<<<<<<< HEAD
-        return 'File not found', 404
-=======
-        return 'File not found', 404  
->>>>>>> sub-working-tree
+        return 'File not found', 404  # 修正: エラーメッセージを修正
 
+@app.route('/pdf')
 def serve_pdf():
     # PDFファイルのパスを指定
     filepath = Path(app.config['UPLOAD_FOLDER']) / 'ppp.pdf'
     if filepath.exists():
         return send_file(filepath, as_attachment=True, download_name='ppp.pdf')
-<<<<<<< HEAD
-    return 'File not found', 404 
-=======
-    return 'File not found', 404  
-
-def check_category_existence(category_name):
-    category_path = Path(app.config['UPLOAD_FOLDER']) / category_name
-    return category_path.exists()
-
->>>>>>> sub-working-tree
+    return 'File not found', 404  # 修正: エラーメッセージを修正
 
 if __name__ == '__main__':
     app.run(debug=True)
