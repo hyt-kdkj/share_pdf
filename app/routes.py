@@ -6,7 +6,7 @@ import json
 from urllib.parse import unquote
 from app.get_paper_info import extract_metadata_from_pdf
 from werkzeug.utils import secure_filename  # 修正: ファイル名の安全性を確保するためにインポート
-import os  # 修正: ファイル名の重複を防ぐためにosをインポート
+
 
 
 @app.route('/')
@@ -33,10 +33,7 @@ def category_page(category_name):
         with open(registerd_file, 'r', encoding='utf-8') as file:
             papers = json.load(file)
 
-    category = {
-        "name": category_name,
-        "papers": papers
-    }
+    category = Category(category_name)
     return render_template('category.html', category=category)
 
 @app.route('/upload/<string:category_name>', methods=['POST'])
@@ -58,7 +55,7 @@ def upload(category_name):
 
         # ファイル名の重複をチェック
         if save_path.exists():
-            return jsonify({"error": "File with the same name already exists"}), 400
+            return 'File with the same name already exists', 400  # 修正: JSONレスポンスを文字列に変更
 
         try:
             # ファイルを保存
@@ -84,8 +81,8 @@ def upload(category_name):
             # リダイレクトして画面をリロード
             return redirect(url_for('category_page', category_name=category_name))
         except Exception as e:
-            return jsonify({"error": str(e)}), 500  # エラー時のレスポンス
-    return 'Invalid file type', 400  # エラー時は400を返す
+            return f"Error: {str(e)}", 500  
+    return 'Invalid file type', 400  
 
 @app.route('/add_category', methods=['POST'])
 def add_category():
@@ -107,8 +104,8 @@ def add_category():
             data['categories'].sort()
             with open(app.config['CATEGORY_LIST'], 'w', encoding='utf-8') as file:
                 json.dump(data, file, ensure_ascii=False, indent=4)
-        return jsonify({"message": "Category added successfully"}), 200
-    return jsonify({"error": "Category name is required"}), 400
+        return 'Category added successfully', 200  
+    return 'Category name is required', 400  
 
 @app.route('/delete_category', methods=['DELETE'])
 def delete_category():
@@ -130,10 +127,10 @@ def delete_category():
                     with open(app.config['CATEGORY_LIST'], 'w', encoding='utf-8') as file:
                         json.dump(data, file, ensure_ascii=False, indent=4)
 
-                return jsonify({"message": "Category deleted successfully"}), 200
-            return jsonify({"error": "Category must contain only 'registerd.json' to be deleted"}), 400
-        return jsonify({"error": "Category not found"}), 404
-    return jsonify({"error": "Category name is required"}), 400
+                return 'Category deleted successfully', 200  
+            return "Category must contain only 'registerd.json' to be deleted", 400  
+        return 'Category not found', 404  
+    return 'Category name is required', 400  #
 
 @app.route('/rename_category', methods=['PUT'])
 def rename_category():
@@ -153,9 +150,9 @@ def rename_category():
                 data['categories'].sort()
                 with open(app.config['CATEGORY_LIST'], 'w', encoding='utf-8') as file:
                     json.dump(data, file, ensure_ascii=False, indent=4)
-            return jsonify({"message": "Category renamed successfully"}), 200
-        return jsonify({"error": "Category not found"}), 404
-    return jsonify({"error": "Old and new category names are required"}), 400
+            return 'Category renamed successfully', 200  
+        return 'Category not found', 404  
+    return 'Old and new category names are required', 400  
 
 @app.route('/download/<string:category_name>/<string:filename>')
 def download_paper(category_name, filename):
@@ -167,7 +164,7 @@ def download_paper(category_name, filename):
     if file_path.exists():
         return send_file(file_path, as_attachment=True, download_name=filename)
     else:
-        return 'File not found', 404  # 修正: エラーメッセージを修正
+        return 'File not found', 404
 
 @app.route('/pdf')
 def serve_pdf():
@@ -175,7 +172,7 @@ def serve_pdf():
     filepath = Path(app.config['UPLOAD_FOLDER']) / 'ppp.pdf'
     if filepath.exists():
         return send_file(filepath, as_attachment=True, download_name='ppp.pdf')
-    return 'File not found', 404  # 修正: エラーメッセージを修正
+    return 'File not found', 404 
 
 if __name__ == '__main__':
     app.run(debug=True)

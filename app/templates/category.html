@@ -10,7 +10,7 @@
     <body>
         <h1>{{ category.name }} - 論文一覧</h1>
         <ul>
-            {% for paper in category.papers %}
+            {% for paper in category.paper %}
                 <li>
                     <strong>{{ paper.title }}</strong> by {{ (paper.authors or []) | join(', ') }} ({{ paper.published_date }})
                     <a href="{{ url_for('download_paper', category_name=category.name, filename=paper.filename) }}" download>PDFをダウンロード</a>
