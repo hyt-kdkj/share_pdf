@@ -18,15 +18,15 @@
                 <input type="text" name="category_name" placeholder="Category Name" required>
                 <button type="submit">Add</button>
             </form>
-            <h3>Delete Category</h3>
+            <h3>Delete Category  (Categories with no paper can be deleted.)</h3>
             <form id="delete-category-form">
                 <input type="text" name="category_name" placeholder="Category Name" required>
                 <button type="submit">Delete</button>
             </form>
             <h3>Rename Category</h3>
             <form id="rename-category-form">
-                <input type="text" name="old_name" placeholder="Old Name" required>
-                <input type="text" name="new_name" placeholder="New Name" required>
+                <input type="text" name="old_name" placeholder="Old Category Name" required>
+                <input type="text" name="new_name" placeholder="New Category Name" required>
                 <button type="submit">Rename</button>
             </form>
         </div>
@@ -36,12 +36,16 @@
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const data = Object.fromEntries(formData.entries());
-                await fetch('/add_category', {
+                const response = await fetch('/add_category', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                location.reload();
+                if (response.ok) {
+                    location.reload();  
+                } else {
+                    alert('Failed to add category');
+                }
             };
 
             // カテゴリ削除フォーム
@@ -49,12 +53,16 @@
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const data = Object.fromEntries(formData.entries());
-                await fetch('/delete_category', {
+                const response = await fetch('/delete_category', {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                location.reload();
+                if (response.ok) {
+                    location.reload(); 
+                } else {
+                    alert('Failed to delete category');
+                }
             };
 
             // カテゴリ名変更フォーム
@@ -62,12 +70,16 @@
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const data = Object.fromEntries(formData.entries());
-                await fetch('/rename_category', {
+                const response = await fetch('/rename_category', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                location.reload();
+                if (response.ok) {
+                    location.reload();  
+                } else {
+                    alert('Failed to rename category');
+                }
             };
         </script>
     </body>

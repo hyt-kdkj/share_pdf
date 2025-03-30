@@ -3,52 +3,21 @@
     <head>
         <meta charset="UTF-8">
         <title>{{ category.name }} - 論文一覧</title>
+        {{ dropzone.load_css() }}
+        {{ dropzone.load_js() }}
+        {{ dropzone.style('border: 2px dashed #0087F7; margin: 10px 0; min-height: 150px;') }}
     </head>
     <body>
         <h1>{{ category.name }} - 論文一覧</h1>
         <ul>
-            {% for paper in papers %}
+            {% for paper in category.papers %}
                 <li>
-                    <strong>{{ paper.title }}</strong> by {{ paper.authors }} ({{ paper.published_date }})
-                    <a href="{{ url_for('view_pdf', paper_id=paper.id) }}" target="_blank">PDFを表示</a>
-                    <button onclick="deletePaper({{ paper.id }})">削除</button>
+                    <strong>{{ paper.title }}</strong> by {{ (paper.authors or []) | join(', ') }} ({{ paper.published_date }})
+                    <a href="{{ url_for('download_paper', category_name=category.name, filename=paper.filename) }}" download>PDFをダウンロード</a>
                 </li>
             {% endfor %}
         </ul>
-        <h2>論文を追加</h2>
-        <form id="add-paper-form">
-            <input type="text" name="title" placeholder="タイトル" required>
-            <input type="text" name="authors" placeholder="著者">
-            <input type="text" name="published_date" placeholder="出版日">
-            <input type="text" name="doi" placeholder="DOI">
-            <button type="submit">追加</button>
-        </form>
-        <script>
-            document.getElementById('add-paper-form').onsubmit = async function(e) {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                const data = Object.fromEntries(formData.entries());
-                data.category = "{{ category.name }}";
-                try {
-                    await fetch('/add_paper', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                    location.reload();
-                } catch (error) {
-                    console.error('Error adding paper:', error);
-                }
-            };
-
-            async function deletePaper(paperId) {
-                try {
-                    await fetch(`/delete_paper/${paperId}`, { method: 'DELETE' });
-                    location.reload();
-                } catch (error) {
-                    console.error('Error deleting paper:', error);
-                }
-            }
-        </script>
+        <h2>Upload New Paper</h2>
+        <form method="POST" action="{{ url_for('upload', category_name=category.name) }}" class="dropzone" id="upload-zone" enctype="multipart/form-data"></form>
     </body>
 </html>
