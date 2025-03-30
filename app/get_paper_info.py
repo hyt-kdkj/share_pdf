@@ -27,8 +27,7 @@ def extract_metadata_from_pdf(pdf_file):
         # 一時ファイルのパスをdoi.pdf_to_doiに渡す
         DOI = doi.pdf_to_doi(temp_pdf.name)
         if DOI:
-            # 修正: DOIを正規表現で整形
-            match = re.search(r'10\.\d{4,9}/[-._;()/:A-Z0-9]+', DOI, re.IGNORECASE)
+            match = re.search(r'10\.\d{4,9}/[\w\-._;()/:]+', DOI, re.IGNORECASE)
             if match:
                 DOI = match.group(0)  # DOIの正しい部分を抽出
                 title, authors, published_date = get_paper_metadata(DOI)
@@ -40,7 +39,3 @@ def extract_metadata_from_pdf(pdf_file):
                 }, indent=4), True
     return json.dumps({}, indent=4), False
 
-if __name__ == "__main__":
-    filename = 'ppp.pdf'
-    metadata_json = extract_metadata_from_pdf(filename)
-    print(metadata_json)
