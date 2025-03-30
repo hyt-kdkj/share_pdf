@@ -6,7 +6,10 @@ import json
 from urllib.parse import unquote
 from app.get_paper_info import extract_metadata_from_pdf
 from werkzeug.utils import secure_filename  # 修正: ファイル名の安全性を確保するためにインポート
+<<<<<<< HEAD
 
+=======
+>>>>>>> sub-working-tree
 
 
 @app.route('/')
@@ -14,27 +17,27 @@ def index():
     # カテゴリ情報を読み込み
     with open(app.config['CATEGORY_LIST'], 'r', encoding='utf-8') as f:
         data = json.load(f)
-    categories = data.get('categories', [])  # 修正: categories配列を取得
+    categories = data.get('categories', []) 
     return render_template('index.html', categories=categories)
 
 @app.route('/category_page/<string:category_name>')
 def category_page(category_name):
-    # カテゴリ名を使用してCategoryインスタンスを作成
-    category_path = Path(app.config['UPLOAD_FOLDER']) / category_name
-    registerd_file = category_path / 'registerd.json'
-
-    if not category_path.exists():
-        return 'Category not found', 404  # カテゴリフォルダが存在しない場合は404を返す
-
-    # registerd.json が存在しない場合は空のリストを使用
-    if not registerd_file.exists():
-        papers = []
+    if check_category_existence(category_name):
+        category = Category(category_name)
+        return render_template('category.html', category=category)
     else:
-        with open(registerd_file, 'r', encoding='utf-8') as file:
-            papers = json.load(file)
+        with open(app.config['CATEGORY_LIST'], 'r', encoding='utf-8') as f:
+            categories = json.load(f)
+        categories['categories'].remove(category_name)
+        with open(app.config['CATEGORY_LIST'], 'w', encoding='utf-8') as file:
+            json.dump(categories, file, ensure_ascii=False, indent=4)
+        return redirect(url_for('index'),categories=categories)
 
+<<<<<<< HEAD
     category = Category(category_name)
     return render_template('category.html', category=category)
+=======
+>>>>>>> sub-working-tree
 
 @app.route('/upload/<string:category_name>', methods=['POST'])
 def upload(category_name):
@@ -94,7 +97,7 @@ def add_category():
 
         #カテゴリーディレクトリ内に登録された論文情報を管理するためのjsonファイルを追加
         json_file = category_path / "registerd.json"
-        json_file.write_text(json.dumps({}), encoding="utf-8")
+        json_file.write_text(json.dumps([]), encoding="utf-8")
 
         with open(app.config['CATEGORY_LIST'], 'r', encoding='utf-8') as file:
             data = json.load(file)
@@ -140,7 +143,7 @@ def rename_category():
     if old_name and new_name:
         old_path = Path(app.config['UPLOAD_FOLDER']) / old_name
         new_path = Path(app.config['UPLOAD_FOLDER']) / new_name
-        if old_path.exists():
+        if old_path.exists() and not new_path.exists():
             old_path.rename(new_path)
             with open(app.config['CATEGORY_LIST'], 'r', encoding='utf-8') as file:
                 data = json.load(file)
@@ -164,15 +167,27 @@ def download_paper(category_name, filename):
     if file_path.exists():
         return send_file(file_path, as_attachment=True, download_name=filename)
     else:
+<<<<<<< HEAD
         return 'File not found', 404
+=======
+        return 'File not found', 404  
+>>>>>>> sub-working-tree
 
-@app.route('/pdf')
 def serve_pdf():
     # PDFファイルのパスを指定
     filepath = Path(app.config['UPLOAD_FOLDER']) / 'ppp.pdf'
     if filepath.exists():
         return send_file(filepath, as_attachment=True, download_name='ppp.pdf')
+<<<<<<< HEAD
     return 'File not found', 404 
+=======
+    return 'File not found', 404  
+
+def check_category_existence(category_name):
+    category_path = Path(app.config['UPLOAD_FOLDER']) / category_name
+    return category_path.exists()
+
+>>>>>>> sub-working-tree
 
 if __name__ == '__main__':
     app.run(debug=True)
