@@ -6,7 +6,6 @@ import json
 from urllib.parse import unquote
 from app.get_paper_info import extract_metadata_from_pdf
 from werkzeug.utils import secure_filename  # 修正: ファイル名の安全性を確保するためにインポート
-import os  # 修正: ファイル名の重複を防ぐためにosをインポート
 
 
 @app.route('/')
@@ -14,16 +13,17 @@ def index():
     # カテゴリ情報を読み込み
     category_path = Path(app.config['CATEGORY_LIST'])
     if not category_path.exists():
-        category_path.write_text(json.dumps({"categories":{}}), encoding="utf-8")
+        # カテゴリーリストが存在しない場合は初期化
+        category_path.write_text(json.dumps({"categories": []}), encoding="utf-8",indent=4)
         
     with open(category_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
-    categories = data.get('categories', [])  # 修正: categories配列を取得
+    categories = data.get('categories', [])  # 修正: categoriesリストを取得
     return render_template('index.html', categories=categories)
 
 @app.route('/category_page/<string:category_name>')
 def category_page(category_name):
-    # カテゴリ名を使用してCategoryインスタンスを作成
+    # 指定されたカテゴリ名を使用してCategoryインスタンスを作成
     category_path = Path(app.config['UPLOAD_FOLDER']) / category_name
 
     if not category_path.exists():
@@ -38,7 +38,7 @@ def upload(category_name):
     if not f:
         return 'No file provided', 400  # ファイルが提供されていない場合のエラーハンドリング
 
-    # メタデータを取得
+    # PDFファイルからメタデータを取得
     new_paper, flag = extract_metadata_from_pdf(f)
 
     if flag and f.filename.endswith('.pdf'):  # PDFファイルのみ許可
@@ -58,10 +58,10 @@ def upload(category_name):
             f.seek(0)  # ファイルポインタを先頭に戻す
             f.save(save_path)
 
-            # registerd.jsonを更新
-            registerd_file = category_path / 'registerd.json'
-            if registerd_file.exists():
-                with open(registerd_file, 'r', encoding='utf-8') as file:
+            # registered.jsonを更新
+            registered_file = category_path / 'registered.json'  # 修正: ファイル名のタイポ修正
+            if registered_file.exists():
+                with open(registered_file, 'r', encoding='utf-8') as file:
                     data = json.load(file)
             else:
                 data = []
@@ -71,7 +71,7 @@ def upload(category_name):
             new_paper_data["filename"] = save_path.name  # ファイル名を追加
             data.append(new_paper_data)
 
-            with open(registerd_file, 'w', encoding='utf-8') as file:
+            with open(registered_file, 'w', encoding='utf-8') as file:
                 json.dump(data, file, ensure_ascii=False, indent=4)
 
             # リダイレクトして画面をリロード
@@ -82,14 +82,14 @@ def upload(category_name):
 
 @app.route('/add_category', methods=['POST'])
 def add_category():
-    category_name = request.json.get('category_name')
+    category_name = request.json.get('category_name').split()[0]
     if category_name:
-        #新しいカテゴリーディレクトリを追加
+        # 新しいカテゴリーディレクトリを追加
         category_path = Path(app.config['UPLOAD_FOLDER']) / category_name
         category_path.mkdir(parents=True, exist_ok=True)
 
-        #カテゴリーディレクトリ内に登録された論文情報を管理するためのjsonファイルを追加
-        json_file = category_path / "registerd.json"
+        # カテゴリディレクトリ内に登録された論文情報を管理するためのjsonファイルを追加
+        json_file = category_path / "registered.json"  # 修正: ファイル名のタイポ修正
         json_file.write_text(json.dumps([]), encoding="utf-8")
 
         with open(app.config['CATEGORY_LIST'], 'r', encoding='utf-8') as file:
@@ -111,8 +111,8 @@ def delete_category():
         if category_path.exists():
             # ディレクトリ内のファイルを確認
             files = list(category_path.iterdir())
-            if len(files) == 1 and files[0].name == "registerd.json":
-                files[0].unlink()  # registerd.json を削除
+            if len(files) == 1 and files[0].name == "registered.json":  # 修正: ファイル名のタイポ修正
+                files[0].unlink()  # registered.json を削除
                 category_path.rmdir()  # カテゴリフォルダ自体を削除
 
                 # CATEGORY_LISTからカテゴリを削除
@@ -124,7 +124,7 @@ def delete_category():
                         json.dump(data, file, ensure_ascii=False, indent=4)
 
                 return jsonify({"message": "Category deleted successfully"}), 200
-            return jsonify({"error": "Category must contain only 'registerd.json' to be deleted"}), 400
+            return jsonify({"error": "Category must contain only 'registered.json' to be deleted"}), 400
         return jsonify({"error": "Category not found"}), 404
     return jsonify({"error": "Category name is required"}), 400
 
