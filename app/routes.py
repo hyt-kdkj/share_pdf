@@ -1,11 +1,11 @@
 from flask import request, render_template, redirect, url_for, jsonify, send_file
-from pathlib import Path  # 修正: pathlibをインポート
+from pathlib import Path
 from app import app
 from app.models import Category
 import json
 from urllib.parse import unquote
 from app.get_paper_info import extract_metadata_from_pdf
-from werkzeug.utils import secure_filename  # 修正: ファイル名の安全性を確保するためにインポート
+from werkzeug.utils import secure_filename
 
 
 @app.route('/')
@@ -18,7 +18,7 @@ def index():
         
     with open(category_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
-    categories = data.get('categories', [])  # 修正: categoriesリストを取得
+    categories = data.get('categories', [])  # categoriesリストを取得
     return render_template('index.html', categories=categories)
 
 @app.route('/category_page/<string:category_name>')
@@ -59,7 +59,7 @@ def upload(category_name):
             f.save(save_path)
 
             # registered.jsonを更新
-            registered_file = category_path / 'registered.json'  # 修正: ファイル名のタイポ修正
+            registered_file = category_path / 'registered.json'  ファイル名のタイポ修正
             if registered_file.exists():
                 with open(registered_file, 'r', encoding='utf-8') as file:
                     data = json.load(file)
@@ -89,7 +89,7 @@ def add_category():
         category_path.mkdir(parents=True, exist_ok=True)
 
         # カテゴリディレクトリ内に登録された論文情報を管理するためのjsonファイルを追加
-        json_file = category_path / "registered.json"  # 修正: ファイル名のタイポ修正
+        json_file = category_path / "registered.json"  
         json_file.write_text(json.dumps([]), encoding="utf-8")
 
         with open(app.config['CATEGORY_LIST'], 'r', encoding='utf-8') as file:
@@ -111,7 +111,7 @@ def delete_category():
         if category_path.exists():
             # ディレクトリ内のファイルを確認
             files = list(category_path.iterdir())
-            if len(files) == 1 and files[0].name == "registered.json":  # 修正: ファイル名のタイポ修正
+            if len(files) == 1 and files[0].name == "registered.json": 
                 files[0].unlink()  # registered.json を削除
                 category_path.rmdir()  # カテゴリフォルダ自体を削除
 
@@ -124,7 +124,7 @@ def delete_category():
                         json.dump(data, file, ensure_ascii=False, indent=4)
 
                 return jsonify({"message": "Category deleted successfully"}), 200
-            return jsonify({"error": "Category must contain only 'registered.json' to be deleted"}), 400
+            return jsonify({"error": "Category to be deleted must not contain any paper."}), 400
         return jsonify({"error": "Category not found"}), 404
     return jsonify({"error": "Category name is required"}), 400
 
@@ -160,7 +160,7 @@ def download_paper(category_name, filename):
     if file_path.exists():
         return send_file(file_path, as_attachment=True, download_name=filename)
     else:
-        return 'File not found', 404  # 修正: エラーメッセージを修正
+        return 'File not found', 404 
 
 @app.route('/pdf')
 def serve_pdf():
@@ -168,7 +168,7 @@ def serve_pdf():
     filepath = Path(app.config['UPLOAD_FOLDER']) / 'ppp.pdf'
     if filepath.exists():
         return send_file(filepath, as_attachment=True, download_name='ppp.pdf')
-    return 'File not found', 404  # 修正: エラーメッセージを修正
+    return 'File not found', 404 
 
 if __name__ == '__main__':
     app.run(debug=True)
