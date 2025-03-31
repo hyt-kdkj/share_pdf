@@ -12,7 +12,11 @@ import os  # 修正: ファイル名の重複を防ぐためにosをインポー
 @app.route('/')
 def index():
     # カテゴリ情報を読み込み
-    with open(app.config['CATEGORY_LIST'], 'r', encoding='utf-8') as f:
+    category_path = Path(app.config['CATEGORY_LIST'])
+    if not category_path.exists():
+        category_path.write_text(json.dumps({"categories":{}}), encoding="utf-8")
+        
+    with open(category_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     categories = data.get('categories', [])  # 修正: categories配列を取得
     return render_template('index.html', categories=categories)
@@ -92,7 +96,7 @@ def add_category():
             data = json.load(file)
 
         if category_name not in data['categories']:
-            data['categories'].append(category_name)  
+            data['categories'].append(category_name)
             data['categories'].sort()
             with open(app.config['CATEGORY_LIST'], 'w', encoding='utf-8') as file:
                 json.dump(data, file, ensure_ascii=False, indent=4)
