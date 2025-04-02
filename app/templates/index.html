@@ -1,12 +1,88 @@
-<html>
+
+<!DOCTYPE html>
+<html lang="ja">
     <head>
-        {{ dropzone.load_css() }}
-        {{ dropzone.load_js() }}
-        {{ dropzone.style('border: 2px dashed #0087F7; margin: 10%; min-height: 400px;') }}
+        <meta charset="UTF-8">
+        <title>CS29 Paper Sharing Platform</title>
     </head>
     <body>
-        <form method="POST" action="{{ url_for('upload') }}" class="dropzone" id="upload-zone">
-            {{ dropzone.create(action=url_for('upload')) }}
-        </form>
+        <h1>CS29 Paper Sharing Platform</h1>
+        <h2>Category List</h2>
+        <ul>
+            {% for category in categories %}
+                <li><a href="{{ url_for('category_page', category_name=category) }}">{{ category }}</a></li>
+            {% endfor %}
+        </ul>
+        <div>
+            <h3>Add New Category</h3>
+            <form id="add-category-form">
+                <input type="text" name="category_name" placeholder="Category Name" required>
+                <button type="submit">Add</button>
+            </form>
+            <h3>Delete Category  (Categories with no paper can be deleted.)</h3>
+            <form id="delete-category-form">
+                <input type="text" name="category_name" placeholder="Category Name" required>
+                <button type="submit">Delete</button>
+            </form>
+            <h3>Rename Category</h3>
+            <form id="rename-category-form">
+                <input type="text" name="old_name" placeholder="Old Category Name" required>
+                <input type="text" name="new_name" placeholder="New Category Name" required>
+                <button type="submit">Rename</button>
+            </form>
+        </div>
+        <script>
+            // カテゴリ追加フォーム
+            document.getElementById('add-category-form').onsubmit = async function(e) {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+                const response = await fetch('/add_category', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    location.reload();  
+                } else {
+                    alert('Failed to add category');
+                }
+            };
+
+            // カテゴリ削除フォーム
+            document.getElementById('delete-category-form').onsubmit = async function(e) {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+                const response = await fetch('/delete_category', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    location.reload(); 
+                } else {
+                    alert('Failed to delete category');
+                }
+            };
+
+            // カテゴリ名変更フォーム
+            document.getElementById('rename-category-form').onsubmit = async function(e) {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+                const response = await fetch('/rename_category', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    location.reload();  
+                } else {
+                    alert('Failed to rename category');
+                }
+            };
+        </script>
     </body>
 </html>
+
