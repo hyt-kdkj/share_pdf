@@ -1,4 +1,4 @@
-#!/home/hayate/Programs/upload_pdf/venv/bin/python3.12
+#!/home/hayate/Programs/share_pdf/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
