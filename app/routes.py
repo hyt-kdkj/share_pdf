@@ -167,5 +167,13 @@ def serve_pdf():
         return send_file(filepath, as_attachment=True, download_name='ppp.pdf')
     return 'File not found', 404 
 
+@app.route('/get_papers/<category_name>', methods=['GET'])
+def get_papers(category_name):
+    """指定されたカテゴリの論文一覧をHTMLとして返す"""
+    category = Category(category_name)
+    if not category.papers:
+        return "No papers found", 404
+    return category.render_papers_html()
+
 if __name__ == '__main__':
     app.run(debug=True)

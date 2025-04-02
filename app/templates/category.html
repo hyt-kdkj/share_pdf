@@ -11,8 +11,15 @@
             Dropzone.options.uploadZone = {
                 init: function() {
                     this.on("success", function(file, response) {
-                        // アップロード成功時にページをリロード
-                        location.reload();
+                        // アップロード成功時に論文一覧を非同期で更新
+                        fetch("{{ url_for('get_papers', category_name=category.name) }}")
+                            .then(response => response.text())
+                            .then(html => {
+                                document.getElementById("papers-list").innerHTML = html;
+                            })
+                            .catch(error => {
+                                console.error("論文一覧の更新に失敗しました:", error);
+                            });
                     });
                     this.on("error", function(file, errorMessage) {
                         // サーバーからのエラーメッセージを表示
@@ -28,7 +35,7 @@
     </head>
     <body>
         <h1>{{ category.name }} - 論文一覧</h1>
-        <ul>
+        <ul id="papers-list">
             {% for paper in category.papers %}
                 <li>
                     <strong>{{ paper.title }}</strong> by {{ (paper.authors or []) | join(', ') }} ({{ paper.published_date }})

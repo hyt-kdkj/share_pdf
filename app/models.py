@@ -23,4 +23,17 @@ class Category:
     def __repr__(self):
         return f'<Category {self.name}>'
 
+    def render_papers_html(self):
+        """論文一覧をHTMLとして返す"""
+        html = ""
+        for paper in self.papers:
+            authors = ", ".join(paper.get("authors", []))
+            html += f"""
+            <li>
+                <strong>{paper.get('title', 'Unknown')}</strong> by {authors} ({paper.get('published_date', 'Unknown')})
+                <a href="/download/{self.name}/{paper.get('filename', '')}" download>PDFをダウンロード</a>
+            </li>
+            """
+        return html
+
 
