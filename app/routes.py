@@ -41,44 +41,41 @@ def upload(category_name):
     # PDFファイルからメタデータを取得
     new_paper, flag = extract_metadata_from_pdf(f)
 
-    if flag and f.filename.endswith('.pdf'):  # PDFファイルのみ許可
-        category_path = Path(app.config['UPLOAD_FOLDER']) / category_name
-        category_path.mkdir(parents=True, exist_ok=True)  # カテゴリフォルダを作成
+    if not flag and not f.filename.endswith('.pdf'):  # PDFファイルのみ許可
+        return jsonify({"error":"Invalid file type. Only PDF files are allowed."}), 400
+    category_path = Path(app.config['UPLOAD_FOLDER']) / category_name
+    category_path.mkdir(parents=True, exist_ok=True)  # カテゴリフォルダを作成
 
-        # ファイル名を安全にし、重複を防ぐ
-        original_filename = secure_filename(f.filename)
-        save_path = category_path / original_filename
+    # ファイル名を安全にし、重複を防ぐ
+    original_filename = secure_filename(f.filename)
+    save_path = category_path / original_filename
+    
+    # ファイル名の重複をチェック
+    if save_path.exists():
+        return jsonify({"error": "File with the same name already exists"}), 400
 
-        # ファイル名の重複をチェック
-        if save_path.exists():
-            return jsonify({"error": "File with the same name already exists"}), 400
+    try:
+        # ファイルを保存
+        f.seek(0)  # ファイルポインタを先頭に戻す
+        f.save(save_path)
+        # registered.jsonを更新
+        registered_file = category_path / 'registered.json'
+        if registered_file.exists():
+            with open(registered_file, 'r', encoding='utf-8') as file:
+                data = json.load(file)
+        else:
+            data = []
+        # 新しい論文情報を追加
+        new_paper_data = json.loads(new_paper)  # JSON文字列を辞書に変換
+        new_paper_data["filename"] = save_path.name  # ファイル名を追加
+        data.append(new_paper_data)
+        with open(registered_file, 'w', encoding='utf-8') as file:
+            json.dump(data, file, ensure_ascii=False, indent=4)
+        # リダイレクトして画面をリロード
+        return jsonify({"success":"file uploaded successfully."})
+    except Exception as e:
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500  # エラー時のレスポンス
 
-        try:
-            # ファイルを保存
-            f.seek(0)  # ファイルポインタを先頭に戻す
-            f.save(save_path)
-
-            # registered.jsonを更新
-            registered_file = category_path / 'registered.json'  ファイル名のタイポ修正
-            if registered_file.exists():
-                with open(registered_file, 'r', encoding='utf-8') as file:
-                    data = json.load(file)
-            else:
-                data = []
-
-            # 新しい論文情報を追加
-            new_paper_data = json.loads(new_paper)  # JSON文字列を辞書に変換
-            new_paper_data["filename"] = save_path.name  # ファイル名を追加
-            data.append(new_paper_data)
-
-            with open(registered_file, 'w', encoding='utf-8') as file:
-                json.dump(data, file, ensure_ascii=False, indent=4)
-
-            # リダイレクトして画面をリロード
-            return redirect(url_for('category_page', category_name=category_name))
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500  # エラー時のレスポンス
-    return 'Invalid file type', 400  # エラー時は400を返す
 
 @app.route('/add_category', methods=['POST'])
 def add_category():
